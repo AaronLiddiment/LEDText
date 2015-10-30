@@ -1,5 +1,5 @@
 /*
-LEDText V4 class by Aaron Liddiment (c) 2015
+LEDText V5 class by Aaron Liddiment (c) 2015
 
 Uses my LEDMatrix class and especially the 
 
@@ -133,7 +133,7 @@ void cLEDText::SetTextColrOptions(uint16_t Options, uint8_t ColA1, uint8_t ColA2
 
 void cLEDText::SetFrameRate(uint8_t Rate)
 {
-	m_FrameRate = Rate;
+  m_FrameRate = Rate;
 }
 
 
@@ -167,16 +167,17 @@ void cLEDText::DecodeOptions(uint16_t *tp, uint16_t *opt, uint8_t *backDim, uint
       *tp += 1;
       break;
     case UC_FRAME_RATE:
-      if ((m_XBitPos == 0) && (m_YBitPos == 0))
-        m_FrameRate = (uint8_t)m_pText[*tp + 1];
+      m_FrameRate = (uint8_t)m_pText[*tp + 1];
       *tp += 1;
       break;
     case UC_DELAY_FRAMES:
-      if ( ((m_XBitPos == 0) && (m_YBitPos == 0)) && (m_LastDelayTP < *tp) )
+      if (m_LastDelayTP < *tp)
       {
         m_LastDelayTP = *tp;
         m_DelayCounter = (m_pText[*tp + 1] << 8) + m_pText[*tp + 2];
       }
+      else if ( (m_LastDelayTP == *tp) && (m_DelayCounter == 0) )
+        m_LastDelayTP++;
       *tp += 2;
       break;
     case UC_CUSTOM_RC:
@@ -186,7 +187,7 @@ void cLEDText::DecodeOptions(uint16_t *tp, uint16_t *opt, uint8_t *backDim, uint
         *RC = m_pText[*tp + 1];
       }
       *tp += 1;
-    	break;
+      break;
     case UC_CHAR_UP:
     case UC_CHAR_DOWN:
     case UC_CHAR_LEFT:
@@ -329,13 +330,19 @@ int cLEDText::UpdateText()
         uint16_t oldopt = opt;
         DecodeOptions(&tp, &opt, &bDim, c1, c2, &cDim, &RC);
         tp++;
-        if ((m_Options & INSTANT_OPTIONS_MODE) == INSTANT_OPTIONS_MODE)
+        if ( (tp == (m_LastDelayTP + 3)) && (m_DelayCounter > 0) )
+        { // Fix to stop processing codes until delay expired
+          tp = m_pSize;
+          x = m_XMax + 1;
+        }
+        else if ((m_Options & INSTANT_OPTIONS_MODE) == INSTANT_OPTIONS_MODE)
           opt = (opt & (~SCROLL_MASK)) | (oldopt & SCROLL_MASK);
         else if ((oldopt & SCROLL_MASK) != (opt & SCROLL_MASK))
         {
           if (m_EOLtp == 0)
             m_EOLtp = tp;
           tp = m_pSize;
+          x = m_XMax + 1;
           opt = oldopt;
         }
       }
