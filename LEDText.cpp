@@ -1,5 +1,5 @@
 /*
-LEDText V5 class by Aaron Liddiment (c) 2015
+LEDText V6 class by Aaron Liddiment (c) 2015
 
 Uses my LEDMatrix class and especially the 
 
@@ -18,36 +18,36 @@ Even the basic examples need 12k rom & 4k ram
 #define  SCROLL_MASK     (SCROLL_LEFT | SCROLL_RIGHT | SCROLL_UP | SCROLL_DOWN)
 #define  COLR_MASK       (COLR_RGB | COLR_HSV | COLR_SINGLE | COLR_GRAD | COLR_CHAR | COLR_AREA | COLR_VERT | COLR_HORI | COLR_EMPTY | COLR_DIMMING)
 
-#define  UC_BACKGND_ERASE      0x80
-#define  UC_BACKGND_LEAVE      0x81
-#define  UC_BACKGND_DIMMING    0x82
-#define  UC_FRAME_RATE         0x84
-#define  UC_DELAY_FRAMES       0x85
+#define  UC_CHAR_UP            0xd8
+#define  UC_CHAR_DOWN          0xd9
+#define  UC_CHAR_LEFT          0xda
+#define  UC_CHAR_RIGHT         0xdb
 
-#define  UC_CUSTOM_RC          0x88
+#define  UC_SCROLL_LEFT        0xdc
+#define  UC_SCROLL_RIGHT       0xdd
+#define  UC_SCROLL_UP          0xde
+#define  UC_SCROLL_DOWN        0xdf
 
-#define  UC_SCROLL_LEFT        0x90
-#define  UC_SCROLL_RIGHT       0x91
-#define  UC_SCROLL_UP          0x92
-#define  UC_SCROLL_DOWN        0x93
+#define  UC_RGB                0xe0
+#define  UC_HSV                0xe1
+#define  UC_RGB_CV             0xe2
+#define  UC_HSV_CV             0xe3
+#define  UC_RGB_AV             0xe6
+#define  UC_HSV_AV             0xe7
+#define  UC_RGB_CH             0xea
+#define  UC_HSV_CH             0xeb
+#define  UC_RGB_AH             0xee
+#define  UC_HSV_AH             0xef
+#define  UC_COLR_EMPTY         0xf0
+#define  UC_COLR_DIMMING       0xf1
 
-#define  UC_CHAR_UP            0xa0
-#define  UC_CHAR_DOWN          0xa1
-#define  UC_CHAR_LEFT          0xa2
-#define  UC_CHAR_RIGHT         0xa3
+#define  UC_BACKGND_ERASE      0xf4
+#define  UC_BACKGND_LEAVE      0xf5
+#define  UC_BACKGND_DIMMING    0xf6
 
-#define  UC_RGB                0xc0
-#define  UC_HSV                0xc1
-#define  UC_RGB_CV             0xc2
-#define  UC_HSV_CV             0xc3
-#define  UC_RGB_AV             0xc6
-#define  UC_HSV_AV             0xc7
-#define  UC_RGB_CH             0xca
-#define  UC_HSV_CH             0xcb
-#define  UC_RGB_AH             0xce
-#define  UC_HSV_AH             0xcf
-#define  UC_COLR_EMPTY         0xd0
-#define  UC_COLR_DIMMING       0xe0
+#define  UC_FRAME_RATE         0xf8
+#define  UC_DELAY_FRAMES       0xf9
+#define  UC_CUSTOM_RC          0xfa
 
 
 void cLEDText::SetFont(const uint8_t *FontData)
@@ -192,13 +192,13 @@ void cLEDText::DecodeOptions(uint16_t *tp, uint16_t *opt, uint8_t *backDim, uint
     case UC_CHAR_DOWN:
     case UC_CHAR_LEFT:
     case UC_CHAR_RIGHT:
-      *opt = (*opt & (~CHAR_MASK)) | (((uint16_t)m_pText[*tp] << 2) & CHAR_MASK);
+      *opt = (*opt & (~CHAR_MASK)) | ((((uint16_t)m_pText[*tp] & 0x03) << 2) & CHAR_MASK);
       break;
     case UC_SCROLL_LEFT:
     case UC_SCROLL_RIGHT:
     case UC_SCROLL_UP:
     case UC_SCROLL_DOWN:
-      *opt = (*opt & (~SCROLL_MASK)) | (((uint16_t)m_pText[*tp] << 4) & SCROLL_MASK);
+      *opt = (*opt & (~SCROLL_MASK)) | ((((uint16_t)m_pText[*tp] & 0x03) << 4) & SCROLL_MASK);
       break;
     case UC_RGB:
     case UC_HSV:
@@ -210,31 +210,26 @@ void cLEDText::DecodeOptions(uint16_t *tp, uint16_t *opt, uint8_t *backDim, uint
     case UC_HSV_CH:
     case UC_RGB_AH:
     case UC_HSV_AH:
-    case UC_COLR_EMPTY:
-    case UC_COLR_DIMMING:
-      *opt = (*opt & (~COLR_MASK)) | (((uint16_t)m_pText[*tp] << 6) & COLR_MASK);
-      if ((*opt & COLR_EMPTY) != COLR_EMPTY)
+      *opt = (*opt & (~COLR_MASK)) | ((((uint16_t)m_pText[*tp] & 0x0f) << 6) & COLR_MASK);
+      col1[0] = m_pText[*tp + 1];
+      col1[1] = m_pText[*tp + 2];
+      col1[2] = m_pText[*tp + 3];
+      *tp += 3;
+      if ((*opt & COLR_GRAD) == COLR_GRAD)
       {
-        if ((*opt & COLR_DIMMING) == COLR_DIMMING)
-        {
-          *colDim = (uint8_t)m_pText[*tp + 1];
-          *tp += 1;
-        }
-        else
-        {
-          col1[0] = m_pText[*tp + 1];
-          col1[1] = m_pText[*tp + 2];
-          col1[2] = m_pText[*tp + 3];
-          *tp += 3;
-          if ((*opt & COLR_GRAD) == COLR_GRAD)
-          {
-            col2[0] = m_pText[*tp + 1];
-            col2[1] = m_pText[*tp + 2];
-            col2[2] = m_pText[*tp + 3];
-            *tp += 3;
-          }
-        }
+        col2[0] = m_pText[*tp + 1];
+        col2[1] = m_pText[*tp + 2];
+        col2[2] = m_pText[*tp + 3];
+        *tp += 3;
       }
+      break;
+    case UC_COLR_EMPTY:
+      *opt = (*opt & (~COLR_MASK)) | COLR_EMPTY;
+      break;
+    case UC_COLR_DIMMING:
+      *opt = (*opt & (~COLR_MASK)) | COLR_DIMMING;
+      *colDim = (uint8_t)m_pText[*tp + 1];
+      *tp += 1;
       break;
    }
 }
