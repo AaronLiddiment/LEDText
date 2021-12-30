@@ -102,7 +102,8 @@ class cLEDText
     void DecodeOptions(uint16_t *tp, uint16_t *opt, uint8_t *backDim, uint8_t *col1, uint8_t *col2, uint8_t *colDim, uint8_t *RC);
 
     cLEDMatrixBase *m_Matrix;
-    uint8_t m_FontWidth, m_FontHeight, m_FontBase, m_FontUpper, m_FWBytes, m_FCBytes;
+    uint8_t m_FontWidth, m_FontHeight, m_FontBase, m_FontUpper, m_FWBytes;
+    uint16_t m_FCBytes;
     const uint8_t *m_FontData;
     int16_t m_XMin, m_XMax, m_YMin, m_YMax;
     unsigned char *m_pText;
