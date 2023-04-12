@@ -4,22 +4,36 @@
 // direction.
 
 #include <FastLED.h>
+
 #include <LEDMatrix.h>
 #include <LEDText.h>
-#include <FontAtari.h>
+#include <Font12x16.h>
 
-#define LED_PIN        27
+// Change the next 6 defines to match your matrix type and size
+
+#define LED_PIN        2
 #define COLOR_ORDER    GRB
 #define CHIPSET        WS2812B
-#define MATRIX_WIDTH   8
-#define MATRIX_HEIGHT  8
+
+#define MATRIX_WIDTH   32
+#define MATRIX_HEIGHT  16
 #define MATRIX_TYPE    HORIZONTAL_MATRIX
 
 cLEDMatrix<MATRIX_WIDTH, MATRIX_HEIGHT, MATRIX_TYPE> leds;
 
 cLEDText ScrollingMsg;
 
-const unsigned char TxtDemo[] = { EFFECT_SCROLL_LEFT "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz ~1234567890-= ~!@#$%^&*()_+ []{};:,.<>/?" };
+const unsigned char TxtDemo[] = { EFFECT_FRAME_RATE "\x00"
+                                  EFFECT_HSV_AH "\x00\xff\xff\xff\xff\xff"
+                                  EFFECT_SCROLL_LEFT "   The "
+                                  EFFECT_SCROLL_UP "Quick "
+                                  EFFECT_SCROLL_LEFT "Brown "
+                                  EFFECT_SCROLL_DOWN "Fox"
+                                  EFFECT_SCROLL_LEFT "Jumps "
+                                  EFFECT_SCROLL_UP "Over  "
+                                  EFFECT_SCROLL_LEFT "The "
+                                  EFFECT_SCROLL_DOWN "Lazy  "
+                                  EFFECT_SCROLL_LEFT "Dog " };
 uint16_t Options;
 
 void setup()
@@ -38,7 +52,7 @@ void setup()
   delay(1000);
   FastLED.show();
 
-  ScrollingMsg.SetFont(AtariFontData);
+  ScrollingMsg.SetFont(Font12x16Data);
   ScrollingMsg.Init(&leds, leds.Width(), ScrollingMsg.FontHeight() + 1, 0, 0);
   ScrollingMsg.SetText((unsigned char *)TxtDemo, sizeof(TxtDemo) - 1);
   ScrollingMsg.SetTextColrOptions(COLR_RGB | COLR_SINGLE, 0xff, 0x00, 0xff);
@@ -56,5 +70,7 @@ void loop()
     ScrollingMsg.SetOptionsChangeMode(Options);
   }
   else
-    FastLED.delay(1000/24);
+    FastLED.show();
+  delay(10);
 }
+
